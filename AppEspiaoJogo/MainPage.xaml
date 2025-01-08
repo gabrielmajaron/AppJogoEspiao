@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AppEspiaoJogo.MainPage"
+             BackgroundImageSource="background.jpg">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button Text="Host"
+                Grid.Row="0"
+                Grid.Column="0"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                Clicked="OnHostButtonClicked"/>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+            <Label 
+        Padding="10"
+        Text="Jogo Nº:" 
+        Grid.Row="0" 
+        Grid.Column="0" 
+        HorizontalOptions="Start" 
+        VerticalOptions="End" 
+        FontSize="20" 
+        FontAttributes="Bold" 
+        TextColor="White" 
+        LineBreakMode="NoWrap" />
+
+        <Label 
+        Text="0" 
+        x:Name="GameNumber" 
+        Grid.ColumnSpan="2"
+        Grid.Row="0" 
+        Grid.Column="1" 
+        HorizontalOptions="Center" 
+        VerticalOptions="End" 
+        FontSize="20" 
+        TextColor="White" />
+
+        <Label
+        Padding="10"
+        Text="Palavra:" 
+        Grid.Row="2" 
+        Grid.Column="0" 
+        HorizontalOptions="Start" 
+        VerticalOptions="Center" 
+        FontSize="20" 
+        FontAttributes="Bold" 
+        TextColor="White" 
+        LineBreakMode="NoWrap" />
+
+            <Label 
+        Grid.ColumnSpan="2"
+        Text="-" 
+        x:Name="GameWord" 
+        Grid.Row="2" 
+        Grid.Column="1" 
+        HorizontalOptions="Center" 
+        VerticalOptions="Center" 
+        FontSize="20" 
+        TextColor="White"/>
+
+        </Grid>
+
+        <Grid Grid.Row="3" Grid.ColumnSpan="3">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Label     
+        Grid.Row="0" 
+        Grid.Column="1"         
+        Text="Conectar" 
+        x:Name="ConnectLabel"
+        FontSize="24"
+        HorizontalOptions="Center" 
+        VerticalOptions="End" 
+        TextColor="White"  />
+
+        <ImageButton 
+        x:Name="PasteButton"
+        Margin="0,0,0,-10"
+        BackgroundColor="Transparent" 
+        WidthRequest="40" 
+        HeightRequest="40" 
+        Source="paste.png"     
+        Grid.Row="0" 
+        Grid.Column="2"     
+        VerticalOptions="End" 
+        HorizontalOptions="End" 
+        Clicked="Paste_Clicked"/>
+
+        <Entry
+        Margin="10" 
+        Grid.ColumnSpan="3"
+        Grid.Row="1" 
+        VerticalOptions="End" 
+        x:Name="DeviceIpEntry"                    
+        Text="127.0.0.1" 
+        Placeholder="Digite o IP do dispositivo" 
+        TextColor="White" />
+
+        <Button       
+        Grid.ColumnSpan="3"
+        Grid.Row="2" 
+        VerticalOptions="End" 
+        Text="Conectar" 
+        x:Name="ConnectButton" 
+        Clicked="ConnectDevice_Clicked"
+        TextColor="White"  />
+
+        </Grid>
+    </Grid>
+</ContentPage>
