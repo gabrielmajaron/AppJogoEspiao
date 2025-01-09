@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:ff="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="AppEspiaoJogo.LocationsPage"
              BackgroundImageSource="background.jpg"
@@ -19,7 +20,9 @@
                              VerticalItemSpacing="10"
                              HorizontalItemSpacing="10" />
         </CollectionView.ItemsLayout>
-
+        
+        
+        
         <CollectionView.ItemTemplate>
             <DataTemplate>
                 <Frame CornerRadius="15"
@@ -27,7 +30,14 @@
                        BackgroundColor="#1E1E1E"
                        HasShadow="True"
                        HeightRequest="100">
-                    <Label Text="{Binding .}"
+
+                    <!--<Image HeightRequest="30" WidthRequest="30">
+    <Image.Source>
+        <ImageSource>resource://AppEspiaoJogo.Resources.Images.Places.cidade.jpg</ImageSource>
+    </Image.Source>
+</Image>-->
+
+                    <Label Text="{Binding Name}"
                            FontSize="20"
                            TextColor="White"
                            FontAttributes="Bold"

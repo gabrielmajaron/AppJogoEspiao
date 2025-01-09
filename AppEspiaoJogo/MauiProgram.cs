@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using FFImageLoading.Maui;
+using Microsoft.Extensions.Logging;
 
 namespace AppEspiaoJogo
 {
@@ -13,11 +14,17 @@ namespace AppEspiaoJogo
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+                })
+                .UseFFImageLoading();
 
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
+
+            builder.ConfigureMauiHandlers(handlers =>
+            {
+                handlers.AddHandler<Image, Microsoft.Maui.Handlers.ImageHandler>();
+            });
 
             return builder.Build();
         }

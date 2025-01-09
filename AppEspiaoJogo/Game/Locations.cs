@@ -16,13 +16,10 @@ namespace AppEspiaoJogo.Game
             "Ilha",
             "Oceano",
             "Ponte",
-            "Parque",
-            "Campo",
-            "Mar",
             "Praça",
             "Farol",
             "Fábrica",
-            "Polo Norte",
+            "Polo Norte",//---
             "Estádio de Futebol",
             "Biblioteca",
             "Mina de Ouro",
@@ -62,6 +59,29 @@ namespace AppEspiaoJogo.Game
             "Ilha Deserta"
         };
 
+        private static readonly List<Place> _places = new (){
+            new ()
+            {
+               // Name = "Cidade",
+//                ImageUrl = "cidade.jpg"
+                //ImageUrl = "resource://AppEspiaoJogo.Resources.Images.Places.cidade.jpg"
+            }/*"Cidade",
+            "Castelo",
+            "Floresta",
+            "Montanha",
+            "Praia",
+            "Deserto",
+            "Vulcão",
+            "Caverna",
+            "Ilha",
+            "Oceano",
+            "Ponte",
+            "Praça",
+            "Farol",
+            "Fábrica",
+            "Polo Norte",//---*/
+        };
+
         public static List<string> GetAll()
         {
             return new List<string>(_locations);
@@ -73,6 +93,11 @@ namespace AppEspiaoJogo.Game
             int index = random.Next(_locations.Count);
             return _locations[index];
         }
-    }
 
+        public static List<Place> GetPlaces()
+        {
+            return _places;
+        }
+
+    }
 }
