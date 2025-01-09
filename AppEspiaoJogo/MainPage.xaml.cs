@@ -158,5 +158,10 @@ namespace AppEspiaoJogo
             #endif
             base.OnNavigatedTo(args);
         }
+
+        private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
+        {
+            await Navigation.PushModalAsync(new LocationsPage());
+        }
     }
 }

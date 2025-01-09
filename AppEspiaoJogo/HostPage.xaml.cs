@@ -180,4 +180,9 @@ public partial class HostPage : ContentPage
         }
         return true;
     }
+
+    private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
+    {
+        await Navigation.PushModalAsync(new LocationsPage());
+    }
 }

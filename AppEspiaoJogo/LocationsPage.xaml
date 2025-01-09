@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AppEspiaoJogo.LocationsPage"
+             BackgroundImageSource="background.jpg"
+             Title="LocationsPage">
+
+    <CollectionView ItemsSource="{Binding Locations}"
+                    Margin="20">
+        
+        <CollectionView.GestureRecognizers>
+            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                  Tapped="OnPageDoubleTapped"/>
+        </CollectionView.GestureRecognizers>
+        
+        <CollectionView.ItemsLayout>
+            <GridItemsLayout Orientation="Vertical"
+                             Span="2" 
+                             VerticalItemSpacing="10"
+                             HorizontalItemSpacing="10" />
+        </CollectionView.ItemsLayout>
+
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <Frame CornerRadius="15"
+                       Padding="20"
+                       BackgroundColor="#1E1E1E"
+                       HasShadow="True"
+                       HeightRequest="100">
+                    <Label Text="{Binding .}"
+                           FontSize="20"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Frame>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+
+</ContentPage>

@@ -5,7 +5,13 @@
              BackgroundImageSource="background.jpg">
     
         <Grid Padding="20">
-            <Grid.RowDefinitions>
+
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                  Tapped="OnPageDoubleTapped"/>
+        </Grid.GestureRecognizers>
+            
+        <Grid.RowDefinitions>
             <RowDefinition Height="*" />            
             <RowDefinition Height="*" />
             </Grid.RowDefinitions>

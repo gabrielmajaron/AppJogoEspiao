@@ -4,7 +4,13 @@
              x:Class="AppEspiaoJogo.MainPage"
              BackgroundImageSource="background.jpg">
 
-    <Grid Padding="20">
+
+    <Grid Padding="20">        
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer NumberOfTapsRequired="2"
+                                  Tapped="OnPageDoubleTapped"/>
+        </Grid.GestureRecognizers>
+        
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -140,7 +146,6 @@
         x:Name="ConnectButton" 
         Clicked="ConnectDevice_Clicked"
         TextColor="White"  />
-
         </Grid>
     </Grid>
 </ContentPage>
