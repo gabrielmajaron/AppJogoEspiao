@@ -38,7 +38,7 @@ namespace AppEspiaoJogo.Platforms.Android.Services
             try
             {
                 var clientService = new ClientSocketService();
-                Task.Run(() => clientService.ConnectDevice(intent.GetStringExtra("ServerIp")!));
+                Task.Run(() => clientService.ConnectDevice(intent.GetStringExtra("ServerIp")!, true));
                 return StartCommandResult.Sticky;
             }
             catch (Exception ex)
