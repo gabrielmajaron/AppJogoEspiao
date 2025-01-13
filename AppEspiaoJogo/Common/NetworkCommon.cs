@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Net.NetworkInformation;
+using System.Text;
 
 namespace AppEspiaoJogo.Common
 {
@@ -58,6 +59,32 @@ namespace AppEspiaoJogo.Common
                 Server.Stop();
             }
             ServerIsRunning = false;
+        }
+
+        public static async Task StopClient()
+        {
+            await SendMessage("DISCONNECT");
+            Client.Close();
+        }
+
+        private static async Task SendMessage(string msg)
+        {
+            if (!IsClientConnected())
+                return;
+
+            try
+            {
+                var stream = Client.GetStream();
+
+                if (!stream.CanWrite)
+                    return;
+
+                var data = Encoding.UTF8.GetBytes(msg);
+                await stream.WriteAsync(data, 0, data.Length);
+            }
+            catch (Exception _)
+            {
+            }
         }
     }
 }

@@ -203,24 +203,50 @@ namespace AppEspiaoJogo.Services
         private async Task BroadcastMessageAsync(List<TcpClient> clients, string message)
         {
             byte[] data = Encoding.UTF8.GetBytes(message);
+            List<TcpClient> failedToSend = new List<TcpClient>();
 
             foreach (var client in clients)
             {
                 try
                 {
-                    if (client.Connected)
-                    {
-                        var stream = client.GetStream();
+                    var stream = client.GetStream();
+
+                    if (stream.CanWrite)
                         await stream.WriteAsync(data, 0, data.Length);
-                    }
+                    else
+                        failedToSend.Add(client);
+                }
+                catch (IOException ioEx)
+                {
+                    Console.WriteLine($"Erro de E/S: {ioEx.Message}");
+                    failedToSend.Add(client);
+                }
+                catch (ObjectDisposedException odEx)
+                {
+                    Console.WriteLine($"Conexão encerrada: {odEx.Message}");
+                    failedToSend.Add(client);
                 }
                 catch (Exception ex)
                 {
-                    RemoveFromConnectedClients(client);
+                    Console.WriteLine($"Erro desconhecido: {ex.Message}");
+                    failedToSend.Add(client);
                 }
             }
+
+            RemoveFromConnectedClients(failedToSend);
         }
 
+        private void RemoveFromConnectedClients(List<TcpClient> clients)
+        {
+            NetworkCommon.ConnectedClients.RemoveAll(clients.Contains);
+            NetworkCommon.ConnectedClients.RemoveAll(client => !client.Connected);
+            var connectedClientsCount = NetworkCommon.ConnectedClients.Count(c => c.Connected);
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                MessagingCenter.Send<object, string>(this, "SetPlayersCount", connectedClientsCount.ToString());
+            });
+        }
 
         private void RemoveFromConnectedClients(TcpClient client)
         {

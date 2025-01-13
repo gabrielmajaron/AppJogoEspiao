@@ -1,9 +1,11 @@
 ﻿
+using System.Collections.ObjectModel;
+
 namespace AppEspiaoJogo.Game
 {
     public static class Locations
     {
-        private static readonly List<string> _locations = new List<string>
+        private static readonly ObservableCollection<string> _locations = new ()
         {
             "Cidade",
             "Castelo",
@@ -62,9 +64,9 @@ namespace AppEspiaoJogo.Game
             "Ilha Deserta"
         };
 
-        public static List<string> GetAll()
+        public static ObservableCollection<string> GetAll()
         {
-            return new List<string>(_locations);
+            return _locations;
         }
 
         public static string GetRandomLocation()

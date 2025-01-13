@@ -4,6 +4,7 @@ using System.Text;
 using System.Net.Sockets;
 using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Common;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CS0618
 
@@ -14,18 +15,10 @@ namespace AppEspiaoJogo.Services
     {
         public async Task ConnectDevice(string serverIp)
         {
-            if (string.IsNullOrWhiteSpace(serverIp))
-            {
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Erro", "Insira um endereço IP válido."));
-                });
-                return;
-            }
-
             try
             {
                 NetworkCommon.Client = new TcpClient();
+
                 await NetworkCommon.Client.ConnectAsync(serverIp, NetworkCommon.Port);
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
@@ -39,7 +32,6 @@ namespace AppEspiaoJogo.Services
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    //MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Erro", $"Erro ao conectar ao servidor: {ex.Message}"));
                     MessagingCenter.Send<object, string>(this, "ConnectionError", $"Erro ao conectar ao servidor: {ex.Message}");
                 });
             }
@@ -57,7 +49,14 @@ namespace AppEspiaoJogo.Services
                     int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
                     if (bytesRead == 0)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Aviso", "Desconectado"));
+                            MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Initial);
+                        });
                         break;
+                    }
 
                     string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
@@ -78,13 +77,30 @@ namespace AppEspiaoJogo.Services
                     });
                 }
             }
-            catch (Exception _)
+            catch (Exception ex)
             {
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                if (ex.InnerException is SocketException socketEx)
                 {
-                    MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Initial);
-                });
+                    if (socketEx.SocketErrorCode != SocketError.OperationAborted)
+                        await HandleErrorAsync(ex.Message);
+                }
+                else
+                    await HandleErrorAsync(ex.Message);
             }
+            finally
+            {
+                NetworkCommon.Client.Close();
+                NetworkCommon.Client.Dispose();
+            }
+        }
+
+        private async Task HandleErrorAsync(string errorMessage)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Erro", errorMessage));
+                MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Initial);
+            });
         }
 
         private GameContent? GetGameContentFromMessage(ref string receivedMessage)
@@ -119,32 +135,6 @@ namespace AppEspiaoJogo.Services
                 return gameContentList.Last();
 
             return null;
-        }
-
-        public async Task Disconnect()
-        {
-            await SendMessage("DISCONNECT");
-            NetworkCommon.Client.Close();
-        }
-
-        private async Task SendMessage(string msg)
-        {
-            if (!NetworkCommon.IsClientConnected())
-                return;
-
-            try
-            {
-                var stream = NetworkCommon.Client.GetStream();
-
-                if (!stream.CanWrite)
-                    return;
-
-                var data = Encoding.UTF8.GetBytes(msg);
-                await stream.WriteAsync(data, 0, data.Length);
-            }
-            catch (Exception _)
-            {
-            }
         }
     }
 }

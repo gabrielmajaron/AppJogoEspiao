@@ -7,7 +7,6 @@
     android:supportsRtl="true" 
     android:label="Jogo Espião">
 
-    <!-- Definindo o Foreground Service corretamente -->
     <service
         android:name="com.example.AppEspiaoJogo.ServerSocketForegroundService"
         android:exported="true"
@@ -17,11 +16,12 @@
         android:name="com.example.AppEspiaoJogo.ClientSocketForegroundService"
         android:exported="true"
         android:foregroundServiceType="remoteMessaging" />
+  
 </application>
 
-    <!-- Permissões necessárias -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 </manifest>

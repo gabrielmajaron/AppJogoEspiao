@@ -35,7 +35,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+            </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -88,9 +88,9 @@
         VerticalOptions="Center" 
         FontSize="20" 
         TextColor="White"/>
-
+            
         </Grid>
-
+        
         <Grid Grid.Row="3" Grid.ColumnSpan="3">
 
         <Grid.RowDefinitions>
@@ -108,14 +108,14 @@
         <Label     
         Grid.Row="0" 
         Grid.Column="1"         
-        Text="Conectar" 
+        Text="Conectar"  
         x:Name="ConnectLabel"
         FontSize="24"
         HorizontalOptions="Center" 
         VerticalOptions="End" 
         TextColor="White"  />
 
-        <ImageButton 
+            <ImageButton 
         x:Name="PasteButton"
         Margin="0,0,0,-10"
         BackgroundColor="Transparent" 
@@ -147,5 +147,5 @@
         Clicked="ConnectDevice_Clicked"
         TextColor="White"  />
         </Grid>
-    </Grid>
+    </Grid>    
 </ContentPage>

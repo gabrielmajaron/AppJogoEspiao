@@ -3,11 +3,6 @@ using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Game;
 using AppEspiaoJogo.Services;
 
-#if ANDROID
-using Android.Content;
-using AppEspiaoJogo.Platforms.Android.Services;
-#endif
-
 #pragma warning disable CS0618
 
 namespace AppEspiaoJogo
@@ -17,21 +12,19 @@ namespace AppEspiaoJogo
         ClientSocketService _clientSocketService;
         private bool _isConnectButtonClickable = true;
 
-#if ANDROID
-            public static Context? _context;
-            public static Intent? _intent;
-#endif
-
         public MainPage()
         {
+            _clientSocketService = new ClientSocketService();
+
             InitializeComponent();
+
             SetClientInitialState();
 
-            #if ANDROID
-                _context = Android.App.Application.Context;
-                _intent = new Intent(_context, typeof(ClientSocketForegroundService));
-            #endif
+            CreateMessagingCenterSubscriptions();
+        }
 
+        private void CreateMessagingCenterSubscriptions()
+        {
             MessagingCenter.Subscribe<object, (string title, string message)>(this, "DisplayAlert", async (sender, data) =>
             {
                 await DisplayAlert(data.title, data.message, "OK");
@@ -39,7 +32,7 @@ namespace AppEspiaoJogo
 
             MessagingCenter.Subscribe<object, ClientStateEnum>(this, "SetClientState", (sender, state) =>
             {
-                switch(state)
+                switch (state)
                 {
                     case ClientStateEnum.Initial:
                         SetClientInitialState();
@@ -58,16 +51,14 @@ namespace AppEspiaoJogo
             });
 
             MessagingCenter.Subscribe<object, string>(this, "ConnectionError", async (sender, msg) =>
-            { 
-                #if ANDROID
-                    Android.App.Application.Context.StopService(_intent);
-                #endif
+            {
+#if ANDROID
+                ForegroundServicesManager.StopClient();
+#endif
 
                 await DisplayAlert("Erro", msg, "OK");
                 SetClientInitialState();
             });
-
-            _clientSocketService = new ClientSocketService();
         }
 
         private void SetClientRunningState()
@@ -93,7 +84,7 @@ namespace AppEspiaoJogo
 
         private async void ConnectDevice_Clicked(object sender, EventArgs e)
         {
-            if (!_isConnectButtonClickable) 
+            if (!_isConnectButtonClickable)
                 return;
 
             _isConnectButtonClickable = false;
@@ -101,12 +92,12 @@ namespace AppEspiaoJogo
 
             if (NetworkCommon.IsClientConnected())
             {
-                await _clientSocketService.Disconnect();
-                SetClientInitialState();
-
 #if ANDROID
-                Android.App.Application.Context.StopService(_intent);
+                ForegroundServicesManager.StopClient();
 #endif
+                await NetworkCommon.StopClient();
+
+                SetClientInitialState();
 
                 await Task.Delay(2000);
 
@@ -115,14 +106,22 @@ namespace AppEspiaoJogo
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(DeviceIpEntry.Text))
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () => {
+                    await DisplayAlert("Erro", "Insira um endereço IP válido.", "OK");                    
+                });
+            }
+            else
+            {
 #if WINDOWS
-                await _clientSocketService.ConnectDevice(DeviceIpEntry.Text);
+            await _clientSocketService.ConnectDevice(DeviceIpEntry.Text);
 #endif
 
 #if ANDROID
-            _intent.PutExtra("ServerIp", DeviceIpEntry.Text);
-            _context.StartService(_intent);
+            ForegroundServicesManager.StartClient(DeviceIpEntry.Text);
 #endif
+            }
 
             await Task.Delay(2000);
 
@@ -144,20 +143,16 @@ namespace AppEspiaoJogo
             }
         }
 
+#if ANDROID
         protected override void OnNavigatedTo(NavigatedToEventArgs args)
-        {            
-            #if ANDROID                
-                if (ForegroundServicesManager.ActiveServerService != null)
-                    Android.App.Application.Context.StopService(ForegroundServicesManager.ActiveServerService);
+        {
+            if (NetworkCommon.ServerIsRunning)            
+                DisplayAlert("Aviso", "Encerrando servidor.", "OK");
 
-                if(NetworkCommon.ServerIsRunning)
-                {
-                    NetworkCommon.StopServer();
-                    DisplayAlert("Aviso", "Encerrando servidor.", "OK");
-                }
-            #endif
+            ForegroundServicesManager.StopServer();
             base.OnNavigatedTo(args);
-        }
+        }        
+#endif
 
         private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
         {

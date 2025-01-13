@@ -5,37 +5,42 @@
              BackgroundImageSource="background.jpg"
              Title="LocationsPage">
 
-    <CollectionView ItemsSource="{Binding Locations}"
-                    Margin="20">
-        
-        <CollectionView.GestureRecognizers>
-            <TapGestureRecognizer NumberOfTapsRequired="2"
-                                  Tapped="OnPageDoubleTapped"/>
-        </CollectionView.GestureRecognizers>
-        
-        <CollectionView.ItemsLayout>
-            <GridItemsLayout Orientation="Vertical"
-                             Span="2" 
-                             VerticalItemSpacing="10"
-                             HorizontalItemSpacing="10" />
-        </CollectionView.ItemsLayout>
+    <Grid RowDefinitions="*" ColumnDefinitions="*">
+        <ScrollView Grid.Row="0" Grid.Column="0">
+            <CollectionView ItemsSource="{Binding Locations}" Margin="20">
+                <CollectionView.GestureRecognizers>
+                    <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnPageDoubleTapped"/>
+                </CollectionView.GestureRecognizers>
 
-        <CollectionView.ItemTemplate>
-            <DataTemplate>
-                <Frame CornerRadius="15"
-                       Padding="20"
-                       BackgroundColor="#1E1E1E"
-                       HasShadow="True"
-                       HeightRequest="100">
-                    <Label Text="{Binding .}"
-                           FontSize="20"
-                           TextColor="White"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
-                </Frame>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout 
+                        Orientation="Vertical" 
+                        Span="2" 
+                        VerticalItemSpacing="10"
+                        HorizontalItemSpacing="10" />
+                </CollectionView.ItemsLayout>
 
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame 
+                            CornerRadius="15"
+                            Padding="10"
+                            BackgroundColor="#1E1E1E"
+                            HasShadow="True">
+                            
+                        <Label 
+                            Text="{Binding .}"
+                            FontSize="18"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" 
+                            LineBreakMode="WordWrap"
+                            HorizontalTextAlignment="Center" />
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+    </Grid>
 </ContentPage>

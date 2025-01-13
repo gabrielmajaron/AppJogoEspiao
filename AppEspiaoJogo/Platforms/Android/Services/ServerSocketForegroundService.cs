@@ -9,29 +9,16 @@ namespace AppEspiaoJogo.Platforms.Android.Services
     [Service(Name = "com.example.AppEspiaoJogo.ServerSocketForegroundService")]
     public class ServerSocketForegroundService : Service
     {
-        public const int ServiceNotificationId = 1001;
-        const string channelId = "foreground_service_channel";
+        public const int serviceNotificationId = 1001;
 
         public override void OnCreate()
         {
             base.OnCreate();
 
-            // Criar canal de notificação para mensagens remotas
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
-            {
-                var channel = new NotificationChannel(channelId, "Remote Messaging Channel", NotificationImportance.High);
-                var notificationManager = (NotificationManager)GetSystemService(NotificationService);
-                notificationManager.CreateNotificationChannel(channel);
-            }
-
             if (Build.VERSION.SdkInt >= (BuildVersionCodes)34) // API 34+
-            {
-                StartForeground(ServiceNotificationId, CreateNotification("Enviando mensagens..."), ForegroundService.TypeRemoteMessaging);
-            }
+                StartForeground(serviceNotificationId, CreateNotification("Enviando mensagens..."), ForegroundService.TypeRemoteMessaging);
             else
-            {
-                StartForeground(ServiceNotificationId, CreateNotification("Enviando mensagens..."));
-            }
+                StartForeground(serviceNotificationId, CreateNotification("Enviando mensagens..."));
         }
 
 
@@ -41,20 +28,26 @@ namespace AppEspiaoJogo.Platforms.Android.Services
             {
                 var serverService = new ServerSocketService();
                 Task.Run(() => serverService.StartServer());
-                return StartCommandResult.Sticky;
+                return StartCommandResult.RedeliverIntent;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro: {ex.InnerException?.Message}");
             }
 
-            return StartCommandResult.Sticky;
+            return StartCommandResult.RedeliverIntent;
         }
 
         public override IBinder OnBind(Intent intent) => null;
 
         private Notification CreateNotification(string message)
         {
+            const string channelId = "server_foreground_service_channel";
+            var channelName = "Foreground Server Service Channel";
+
+            var channel = new NotificationChannel(channelId, channelName, NotificationImportance.High);
+            var notificationManager = (NotificationManager)GetSystemService(NotificationService);
+            notificationManager.CreateNotificationChannel(channel);
 
             return new Notification.Builder(this, channelId)
                 .SetContentTitle("Jogo em execução")

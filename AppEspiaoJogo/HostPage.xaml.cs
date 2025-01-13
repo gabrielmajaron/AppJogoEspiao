@@ -3,11 +3,6 @@ using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Game;
 using AppEspiaoJogo.Common;
 
-#if ANDROID
-using Android.Content;
-using AppEspiaoJogo.Platforms.Android.Services;
-#endif
-
 namespace AppEspiaoJogo;
 
 public partial class HostPage : ContentPage
@@ -15,23 +10,29 @@ public partial class HostPage : ContentPage
     ServerSocketService _serverSocketService;
 
     public HostPage()
-	{
-        InitializeComponent();        
+    {
+        _serverSocketService = new();
+
+        InitializeComponent();
 
         if (NetworkCommon.ServerIsRunning)
             SetHostRunningState();
         else
         {
-            #if ANDROID
-                if(ForegroundServicesManager.ActiveServerService != null)
-                    Android.App.Application.Context.StopService(ForegroundServicesManager.ActiveServerService);
-            #endif
+#if ANDROID
+            ForegroundServicesManager.StopServer();
+#endif
+#if WINDOWS
             NetworkCommon.StopServer();
+#endif
             SetHostInitialState();
         }
 
-        _serverSocketService = new();
+        CreateMessagingCenterSubscriptions();
+    }
 
+    private void CreateMessagingCenterSubscriptions()
+    {
         MessagingCenter.Subscribe<object, HostStateEnum>(this, "SetHostState", (sender, state) =>
         {
             switch (state)
@@ -45,11 +46,13 @@ public partial class HostPage : ContentPage
             }
         });
 
-        MessagingCenter.Subscribe<object, string>(this, "SetPlayersCount", (sender, count) => {
+        MessagingCenter.Subscribe<object, string>(this, "SetPlayersCount", (sender, count) =>
+        {
             ConnectedPlayersCount.Text = count;
         });
 
-        MessagingCenter.Subscribe<object, (GameContent, bool)> (this, "SetHostGameData", async (sender, data) =>{
+        MessagingCenter.Subscribe<object, (GameContent, bool)>(this, "SetHostGameData", async (sender, data) =>
+        {
 
             var gameContent = data.Item1;
             var isSpy = data.Item2;
@@ -62,19 +65,17 @@ public partial class HostPage : ContentPage
             });
         });
 
-
-        MessagingCenter.Subscribe<object, string>(this, "ServerStartError", async (sender, msg) => {
+        MessagingCenter.Subscribe<object, string>(this, "ServerStartError", async (sender, msg) =>
+        {
 
             SetHostInitialState();
-
-            #if ANDROID
-            if (ForegroundServicesManager.ActiveServerService != null)
-                Android.App.Application.Context.StopService(ForegroundServicesManager.ActiveServerService);
-            #endif      
-            NetworkCommon.StopServer();
-
+#if ANDROID
+            ForegroundServicesManager.StopServer();
+#endif
+#if WINDOWS
+                NetworkCommon.StopServer();
+#endif
             await DisplayAlert("Erro", msg, "OK");
-
         });
     }
 
@@ -106,7 +107,6 @@ public partial class HostPage : ContentPage
         NextGameButton.IsVisible = true;
     }
 
-
     private async void StartServer_Clicked(object sender, EventArgs e)
     {
         if (NetworkCommon.ServerIsRunning)
@@ -118,9 +118,9 @@ public partial class HostPage : ContentPage
 
             if (answer)
             {
-                #if ANDROID
-                    Android.App.Application.Context.StopService(ForegroundServicesManager.ActiveServerService);
-                #endif
+#if ANDROID
+                    ForegroundServicesManager.StopServer();
+#endif
                 _serverSocketService.CloseServer();
                 SetHostInitialState();
             }
@@ -134,15 +134,13 @@ public partial class HostPage : ContentPage
 
         await Clipboard.Default.SetTextAsync(localIp);
 
-        #if ANDROID
-            if(ForegroundServicesManager.ActiveServerService == null)
-                ForegroundServicesManager.ActiveServerService = new Intent(Android.App.Application.Context, typeof(ServerSocketForegroundService));
-            Android.App.Application.Context.StartForegroundService(ForegroundServicesManager.ActiveServerService);
-        #endif
+#if ANDROID
+        ForegroundServicesManager.StartServer();
+#endif
 
-        #if WINDOWS
-            await _serverSocketService.StartServer();
-        #endif
+#if WINDOWS
+        await _serverSocketService.StartServer();
+#endif
     }
 
     private async void StartGame_Clicked(object sender, EventArgs e)
