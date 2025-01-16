@@ -1,8 +1,7 @@
-﻿using Android.App;
+﻿/*using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using AppEspiaoJogo.Services;
 
 namespace AppEspiaoJogo.Platforms.Android.Services
 {
@@ -53,3 +52,4 @@ namespace AppEspiaoJogo.Platforms.Android.Services
         }
     }
 }
+*/

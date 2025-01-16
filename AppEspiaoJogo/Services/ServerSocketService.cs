@@ -1,4 +1,4 @@
-﻿using AppEspiaoJogo.Common;
+﻿/*using AppEspiaoJogo.Common;
 using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Game;
 using System.Net;
@@ -261,3 +261,4 @@ namespace AppEspiaoJogo.Services
         }
     }
 }
+*/

@@ -1,36 +1,28 @@
-using AppEspiaoJogo.Services;
-using AppEspiaoJogo.Enums;
-using AppEspiaoJogo.Game;
 using AppEspiaoJogo.Common;
+using AppEspiaoJogo.Platforms.Android.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace AppEspiaoJogo;
 
 public partial class HostPage : ContentPage
 {
-    ServerSocketService _serverSocketService;
+    ServerHubService _server;
+
+    private readonly HubConnection _hubConnection;
 
     public HostPage()
     {
-        _serverSocketService = new();
+        _server = new();
+        _hubConnection = ServiceLocator.GetService<HubConnection>();
 
         InitializeComponent();
 
-        if (NetworkCommon.ServerIsRunning)
-            SetHostRunningState();
-        else
-        {
-#if ANDROID
-            ForegroundServicesManager.StopServer();
-#endif
-#if WINDOWS
-            NetworkCommon.StopServer();
-#endif
-            SetHostInitialState();
-        }
+        SetHostInitialState();
 
-        CreateMessagingCenterSubscriptions();
+        // CreateMessagingCenterSubscriptions();
     }
 
+    /*
     private void CreateMessagingCenterSubscriptions()
     {
         MessagingCenter.Subscribe<object, HostStateEnum>(this, "SetHostState", (sender, state) =>
@@ -77,7 +69,7 @@ public partial class HostPage : ContentPage
 #endif
             await DisplayAlert("Erro", msg, "OK");
         });
-    }
+    }*/
 
     private void SetHostRunningState()
     {
@@ -109,7 +101,13 @@ public partial class HostPage : ContentPage
 
     private async void StartServer_Clicked(object sender, EventArgs e)
     {
-        if (NetworkCommon.ServerIsRunning)
+
+        /*var localIp = NetworkCommon.GetLocalIpAddress();
+
+        await Clipboard.Default.SetTextAsync(localIp);
+
+        return;*/
+        if (_hubConnection.State == HubConnectionState.Connected)
         {
             bool answer = await DisplayAlert("Confirmação",
                     "Você tem certeza que deseja encerrar?",
@@ -118,15 +116,13 @@ public partial class HostPage : ContentPage
 
             if (answer)
             {
-#if ANDROID
-                    ForegroundServicesManager.StopServer();
-#endif
-                _serverSocketService.CloseServer();
+                await _server.StopServerAsync();                
                 SetHostInitialState();
             }
 
             return;
         }
+
         var localIp = NetworkCommon.GetLocalIpAddress();
 
         if(localIp == "127.0.0.1")
@@ -134,13 +130,9 @@ public partial class HostPage : ContentPage
 
         await Clipboard.Default.SetTextAsync(localIp);
 
-#if ANDROID
-        ForegroundServicesManager.StartServer();
-#endif
+        //await _server.SendMessageAsync("ex server name", "test");
+        _server.StartServer();
 
-#if WINDOWS
-        await _serverSocketService.StartServer();
-#endif
     }
 
     private async void StartGame_Clicked(object sender, EventArgs e)
@@ -161,17 +153,18 @@ public partial class HostPage : ContentPage
         if (!await CanPlay())
             return;
 
-        await _serverSocketService.NextGame();
+        await _server.NextGame();
     }
 
     private async Task<bool> CanPlay()
     {
-        if (!NetworkCommon.ServerIsRunning)
+        if (_server == null)
         {
             await DisplayAlert("Alerta", $"Inicie o servidor antes", "OK");
             return false;
         }
-        if (NetworkCommon.ConnectedClientsCount() < 2)
+
+        if (!_server.IsSuficientClientsConnected())
         {
             await DisplayAlert("Alerta", $"Necessário ao menos 3 jogadores (contando com você) para iniciar o jogo", "OK");
             return false;

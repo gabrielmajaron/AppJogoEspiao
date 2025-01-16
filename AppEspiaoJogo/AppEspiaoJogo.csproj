@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+    
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
 
 		<OutputType>Exe</OutputType>
@@ -57,9 +58,31 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		
+		<!--<PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />-->		
+		<!--<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.0" />-->
+		<!--<PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />-->
+		<!--<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />-->
+		<!--<PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />-->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <!--<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />-->
+    
+
+      <!-- Pacotes necessários -->
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="8.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.Json" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+
+      <!-- O pacote Microsoft.AspNetCore.App já inclui Kestrel e SignalR, então pode ser suficiente -->
+      <PackageReference Include="Microsoft.AspNetCore.App" />
+
+
+
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+		<PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.11.0" />
 	</ItemGroup>
 
 	<ItemGroup>

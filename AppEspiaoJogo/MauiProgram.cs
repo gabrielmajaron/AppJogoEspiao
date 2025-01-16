@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR.Client;
+using AppEspiaoJogo.Common;
 
 namespace AppEspiaoJogo
 {
     public static class MauiProgram
     {
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -15,11 +18,22 @@ namespace AppEspiaoJogo
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-#if DEBUG
-    		builder.Logging.AddDebug();
-#endif
+    #if DEBUG
+            builder.Logging.AddDebug();
+    #endif
+            
+            builder.Services.AddSingleton<HubConnection>(provider =>
+                new HubConnectionBuilder()
+                    .WithUrl("https://127.0.0.1:5001")
+                    .Build());
 
-            return builder.Build();
+            builder.Services.AddSingleton<HostPage>();
+
+            var app = builder.Build();
+
+            ServiceLocator.ServiceProvider = app.Services;
+
+            return app;
         }
     }
 }

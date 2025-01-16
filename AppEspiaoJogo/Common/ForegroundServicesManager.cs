@@ -1,4 +1,4 @@
-﻿#if ANDROID
+﻿/*#if ANDROID
 using Android.Content;
 using AppEspiaoJogo.Platforms.Android.Services;
 
@@ -37,3 +37,4 @@ namespace AppEspiaoJogo.Common
     }
 }
 #endif
+*/

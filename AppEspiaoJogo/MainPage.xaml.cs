@@ -1,7 +1,5 @@
 using AppEspiaoJogo.Common;
-using AppEspiaoJogo.Enums;
-using AppEspiaoJogo.Game;
-using AppEspiaoJogo.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 
 #pragma warning disable CS0618
 
@@ -9,20 +7,49 @@ namespace AppEspiaoJogo
 {
     public partial class MainPage : ContentPage
     {
-        ClientSocketService _clientSocketService;
         private bool _isConnectButtonClickable = true;
+
+        private readonly HubConnection _hubConnection;
+
+        private readonly HostPage _hostPage;        
+
+        public string Message { get; set; }
 
         public MainPage()
         {
-            _clientSocketService = new ClientSocketService();
+            _hubConnection = ServiceLocator.GetService<HubConnection>();
+            _hostPage = ServiceLocator.GetService<HostPage>();
+
+            _hubConnection.On<string, string>("ReceiveMessage", async (user, message) =>
+            {
+                await DisplayAlert("Msg", message, "OK");
+            });
 
             InitializeComponent();
 
             SetClientInitialState();
 
-            CreateMessagingCenterSubscriptions();
+            //CreateMessagingCenterSubscriptions();
         }
 
+        public async Task ConnectAsync()
+        {
+            if (_hubConnection.State == HubConnectionState.Disconnected)
+            {
+                await _hubConnection.StartAsync();
+                SetClientRunningState();
+            }
+        }
+
+        public async Task SendMessageAsync()
+        {
+            if (_hubConnection.State == HubConnectionState.Connected)
+            {
+                await _hubConnection.InvokeAsync("SendMessage", "Ex nome usuário", Message);
+                Message = string.Empty;
+            }
+        }
+        /*
         private void CreateMessagingCenterSubscriptions()
         {
             MessagingCenter.Subscribe<object, (string title, string message)>(this, "DisplayAlert", async (sender, data) =>
@@ -59,7 +86,7 @@ namespace AppEspiaoJogo
                 await DisplayAlert("Erro", msg, "OK");
                 SetClientInitialState();
             });
-        }
+        }*/
 
         private void SetClientRunningState()
         {
@@ -90,38 +117,10 @@ namespace AppEspiaoJogo
             _isConnectButtonClickable = false;
             ConnectButton.IsEnabled = false;
 
-            if (NetworkCommon.IsClientConnected())
-            {
-#if ANDROID
-                ForegroundServicesManager.StopClient();
-#endif
-                await NetworkCommon.StopClient();
-
-                SetClientInitialState();
-
-                await Task.Delay(2000);
-
-                _isConnectButtonClickable = true;
-                ConnectButton.IsEnabled = true;
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(DeviceIpEntry.Text))
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () => {
-                    await DisplayAlert("Erro", "Insira um endereço IP válido.", "OK");                    
-                });
-            }
+            if (_hubConnection.State == HubConnectionState.Disconnected)
+                await ConnectAsync();
             else
-            {
-#if WINDOWS
-            await _clientSocketService.ConnectDevice(DeviceIpEntry.Text);
-#endif
-
-#if ANDROID
-            ForegroundServicesManager.StartClient(DeviceIpEntry.Text);
-#endif
-            }
+                await _hubConnection.StopAsync();
 
             await Task.Delay(2000);
 
@@ -131,7 +130,7 @@ namespace AppEspiaoJogo
 
         private async void OnHostButtonClicked(object sender, EventArgs e)
         {
-            await Navigation.PushAsync(new HostPage());
+            await Navigation.PushAsync(_hostPage);
         }
 
         private async void Paste_Clicked(object sender, EventArgs e)
@@ -143,16 +142,16 @@ namespace AppEspiaoJogo
             }
         }
 
-#if ANDROID
         protected override void OnNavigatedTo(NavigatedToEventArgs args)
         {
-            if (NetworkCommon.ServerIsRunning)            
+            if (_hubConnection.State == HubConnectionState.Connected)
+            {
                 DisplayAlert("Aviso", "Encerrando servidor.", "OK");
+                _hubConnection.StopAsync();
+            }                
 
-            ForegroundServicesManager.StopServer();
             base.OnNavigatedTo(args);
-        }        
-#endif
+        }     
 
         private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
         {
