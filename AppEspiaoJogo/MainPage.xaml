@@ -29,7 +29,9 @@
                 Grid.Column="0"
                 HorizontalOptions="Start"
                 VerticalOptions="Start"
-                Clicked="OnHostButtonClicked"/>
+                Clicked="OnHostButtonClicked"
+                BackgroundColor="#bfc1d0"
+                FontAttributes="Bold"/>
 
         <Grid Grid.Row="1" Grid.ColumnSpan="3">
             <Grid.RowDefinitions>
@@ -145,7 +147,9 @@
         Text="Conectar" 
         x:Name="ConnectButton" 
         Clicked="ConnectDevice_Clicked"
-        TextColor="White"  />
+        TextColor="White" 
+        BackgroundColor="#1e508d"
+        FontAttributes="Bold"/>
         </Grid>
     </Grid>    
 </ContentPage>
