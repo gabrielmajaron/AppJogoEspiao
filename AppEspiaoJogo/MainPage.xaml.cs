@@ -9,12 +9,16 @@ namespace AppEspiaoJogo
 {
     public partial class MainPage : ContentPage
     {
-        ClientSocketService _clientSocketService;
-        private bool _isConnectButtonClickable = true;
+        private bool _allowClicks = true;
+        private readonly HostPage _hostPage;
+        private readonly ClientSocketService _clientSocketService;
+        private readonly LocationsPage _locationsPage;
 
         public MainPage()
         {
-            _clientSocketService = new ClientSocketService();
+            _clientSocketService = ServiceLocator.GetService<ClientSocketService>();
+            _hostPage = ServiceLocator.GetService<HostPage>();
+            _locationsPage = ServiceLocator.GetService<LocationsPage>();
 
             InitializeComponent();
 
@@ -35,6 +39,9 @@ namespace AppEspiaoJogo
                 switch (state)
                 {
                     case ClientStateEnum.Initial:
+#if ANDROID
+                ForegroundServicesManager.StopClient();
+#endif
                         SetClientInitialState();
                         break;
                     case ClientStateEnum.Running:
@@ -55,9 +62,16 @@ namespace AppEspiaoJogo
 #if ANDROID
                 ForegroundServicesManager.StopClient();
 #endif
-
                 await DisplayAlert("Erro", msg, "OK");
                 SetClientInitialState();
+            });
+
+            MessagingCenter.Subscribe<object, string>(this, "Disconnected", (sender, errorMsg) =>
+            {
+#if ANDROID
+                ForegroundServicesManager.StopClient();
+#endif
+                ConnectDevice_Clicked(sender, null); // try to reconnect once
             });
         }
 
@@ -84,10 +98,10 @@ namespace AppEspiaoJogo
 
         private async void ConnectDevice_Clicked(object sender, EventArgs e)
         {
-            if (!_isConnectButtonClickable)
+            if (!_allowClicks)
                 return;
 
-            _isConnectButtonClickable = false;
+            _allowClicks = false;
             ConnectButton.IsEnabled = false;
 
             if (NetworkCommon.IsClientConnected())
@@ -101,7 +115,7 @@ namespace AppEspiaoJogo
 
                 await Task.Delay(2000);
 
-                _isConnectButtonClickable = true;
+                _allowClicks = true;
                 ConnectButton.IsEnabled = true;
                 return;
             }
@@ -125,13 +139,13 @@ namespace AppEspiaoJogo
 
             await Task.Delay(2000);
 
-            _isConnectButtonClickable = true;
+            _allowClicks = true;
             ConnectButton.IsEnabled = true;
         }
 
         private async void OnHostButtonClicked(object sender, EventArgs e)
         {
-            await Navigation.PushAsync(new HostPage());
+            await Navigation.PushAsync(_hostPage);
         }
 
         private async void Paste_Clicked(object sender, EventArgs e)
@@ -156,7 +170,18 @@ namespace AppEspiaoJogo
 
         private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
         {
-            await Navigation.PushModalAsync(new LocationsPage());
+            if (!_allowClicks)
+                return;
+
+            _allowClicks = false;
+            this.IsEnabled = false;
+
+            await Navigation.PushModalAsync(_locationsPage);
+
+            await Task.Delay(2000);
+
+            _allowClicks = true;
+            this.IsEnabled = true;
         }
     }
 }

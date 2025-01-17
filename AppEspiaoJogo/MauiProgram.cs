@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AppEspiaoJogo.Common;
+using AppEspiaoJogo.Services;
+using Microsoft.Extensions.Logging;
 
 namespace AppEspiaoJogo
 {
@@ -19,7 +21,17 @@ namespace AppEspiaoJogo
     		builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+
+            builder.Services.AddSingleton<HostPage>();
+            builder.Services.AddSingleton<LocationsPage>();
+            builder.Services.AddSingleton<ClientSocketService>();
+            builder.Services.AddSingleton<ServerSocketService>();
+
+            var app = builder.Build();
+
+            ServiceLocator.ServiceProvider = app.Services;
+
+            return app;
         }
     }
 }

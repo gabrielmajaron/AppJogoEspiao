@@ -7,11 +7,14 @@ namespace AppEspiaoJogo;
 
 public partial class HostPage : ContentPage
 {
-    ServerSocketService _serverSocketService;
+    private bool _allowClicks = true;
+    private readonly ServerSocketService _serverSocketService;
+    private readonly LocationsPage _locationsPage;    
 
     public HostPage()
     {
-        _serverSocketService = new();
+        _serverSocketService = ServiceLocator.GetService<ServerSocketService>();
+        _locationsPage = ServiceLocator.GetService<LocationsPage>();
 
         InitializeComponent();
 
@@ -181,6 +184,23 @@ public partial class HostPage : ContentPage
 
     private async void OnPageDoubleTapped(object sender, TappedEventArgs e)
     {
-        await Navigation.PushModalAsync(new LocationsPage());
+        if (!_allowClicks)
+            return;
+
+        _allowClicks = false;
+        this.IsEnabled = false;
+
+        await Navigation.PushModalAsync(_locationsPage);
+
+        await Task.Delay(2000);
+
+        _allowClicks = true;
+        this.IsEnabled = true;
+    }
+
+    protected override void OnAppearing()
+    {
+        SetHostInitialState();
+        base.OnAppearing();
     }
 }

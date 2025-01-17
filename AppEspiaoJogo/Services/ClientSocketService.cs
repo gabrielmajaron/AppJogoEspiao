@@ -4,7 +4,6 @@ using System.Text;
 using System.Net.Sockets;
 using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Common;
-using System.Runtime.InteropServices;
 
 #pragma warning disable CS0618
 
@@ -98,8 +97,7 @@ namespace AppEspiaoJogo.Services
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Erro", errorMessage));
-                MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Initial);
+                MessagingCenter.Send<object, string>(this, "Disconnected", errorMessage);                
             });
         }
 
