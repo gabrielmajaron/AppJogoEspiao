@@ -67,6 +67,11 @@ namespace AppEspiaoJogo.Common
             Client.Close();
         }
 
+        public static void CloseClient()
+        {            
+            Client.Close();
+        }
+
         private static async Task SendMessage(string msg)
         {
             if (!IsClientConnected())

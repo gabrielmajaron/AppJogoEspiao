@@ -7,8 +7,8 @@ namespace AppEspiaoJogo.Common
     public static class ForegroundServicesManager
     {
         private static Context _context = Android.App.Application.Context;
-        public static Intent? ClientService = new Intent(_context, typeof(ClientSocketForegroundService));
-        public static Intent? ServerService = new Intent(_context, typeof(ServerSocketForegroundService));
+        private static Intent? ClientService = new Intent(_context, typeof(ClientSocketForegroundService));
+        private static Intent? ServerService = new Intent(_context, typeof(ServerSocketForegroundService));
 
         public static void StartClient(string serverIp)
         {
@@ -20,6 +20,7 @@ namespace AppEspiaoJogo.Common
         public static void StopClient()
         {
             _context.StopService(ClientService);
+            NetworkCommon.CloseClient();
         }
 
         public static void StartServer()

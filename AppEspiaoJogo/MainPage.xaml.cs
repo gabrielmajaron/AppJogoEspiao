@@ -66,12 +66,24 @@ namespace AppEspiaoJogo
                 SetClientInitialState();
             });
 
-            MessagingCenter.Subscribe<object, string>(this, "Disconnected", (sender, errorMsg) =>
+            MessagingCenter.Subscribe<object, string>(this, "Disconnected", async (sender, errorMsg) =>
             {
 #if ANDROID
-                ForegroundServicesManager.StopClient();
+                try
+                {
+                    ForegroundServicesManager.StopClient();
+                }
+                catch (Exception _)
+                { }                
 #endif
-                ConnectDevice_Clicked(sender, null); // try to reconnect once
+                try
+                {
+                    ConnectDevice_Clicked(sender, null); // try to reconnect once
+                }
+                catch (Exception _)
+                {
+                    await DisplayAlert("Erro", errorMsg, "OK");
+                }
             });
         }
 

@@ -31,7 +31,8 @@
                 VerticalOptions="Start"
                 Clicked="OnHostButtonClicked"
                 BackgroundColor="#bfc1d0"
-                FontAttributes="Bold"/>
+                FontAttributes="Bold"
+                TextColor="Black"/>
 
         <Grid Grid.Row="1" Grid.ColumnSpan="3">
             <Grid.RowDefinitions>
