@@ -12,7 +12,7 @@
 		<Nullable>enable</Nullable>
 
 		<ApplicationTitle>Jogo Espião</ApplicationTitle>
-		<ApplicationId>appespiaojogo</ApplicationId>
+    <ApplicationId>appespiaojogo</ApplicationId>
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
