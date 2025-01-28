@@ -1,4 +1,6 @@
-﻿namespace AppEspiaoJogo
+﻿using System.Net;
+
+namespace AppEspiaoJogo
 {
     public partial class App : Application
     {
@@ -25,6 +27,11 @@
             window.Height = newHeight;
 
             return window;
+        }
+
+        protected override void OnResume()
+        {
+            MessagingCenter.Send<object>(this, "ResumeApp");            
         }
     }
 }

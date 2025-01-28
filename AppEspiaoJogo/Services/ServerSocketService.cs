@@ -10,19 +10,26 @@ namespace AppEspiaoJogo.Services
 {
     public class ServerSocketService
     {
+        private bool skipVerification = false;
         private int gameNumber = 0;
+        public static Dictionary<TcpClient, bool> ActiveClients = new Dictionary<TcpClient, bool>();
 
         public ServerSocketService()
         {
-            NetworkCommon.ConnectedClients = new List<TcpClient>();
             gameNumber = 0;
-            NetworkCommon.ServerIsRunning = false;
+            NetworkCommon.ServerIsRunning = false;           
         }
 
         public async Task StartServer()
         {
             try
             {
+                _ = RunVerifyClientsAsync(async () =>
+                {
+                    await VerifyClientsAsync();
+                    await Task.CompletedTask;
+                }, TimeSpan.FromSeconds(11));
+
                 NetworkCommon.Server = new TcpListener(IPAddress.Any, NetworkCommon.Port);
                 NetworkCommon.Server.Start();
 
@@ -41,17 +48,15 @@ namespace AppEspiaoJogo.Services
                     if (client == null)
                         continue;
 
-                    string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+                    var clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
                     DisconnectClientIfDuplicated(clientIp);
 
                     NetworkCommon.ConnectedClients.Add(client);
-                    var connectedClientsCount = NetworkCommon.ConnectedClients.Count();
 
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        MessagingCenter.Send<object, string>(this, "SetPlayersCount", connectedClientsCount.ToString());
-                    });
+                    SetConnectedClientsCount();
+
+                    skipVerification = true;
 
                     _ = HandleClientAsync(client);
                 }
@@ -68,6 +73,7 @@ namespace AppEspiaoJogo.Services
                 NetworkCommon.ServerIsRunning = false;
                 gameNumber = 0;
                 NetworkCommon.ConnectedClients.Clear();
+                ActiveClients.Clear();
 
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
@@ -76,29 +82,94 @@ namespace AppEspiaoJogo.Services
             }
         }
 
+        private async Task RunVerifyClientsAsync(Func<Task> action, TimeSpan interval)
+        {
+            while (true)
+            {
+                try
+                {
+                    await action();
+                    await Task.Delay(interval);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
+        private async Task VerifyClientsAsync()
+        {
+            if (!NetworkCommon.ServerIsRunning)
+                return;
+
+            if (skipVerification)
+            {
+                skipVerification = false;
+                return;
+            }
+
+            var activeClients = ActiveClients.Where(v => v.Value == true).ToDictionary();
+
+            var clientsAux = new List<TcpClient>();
+
+            foreach (var activeClient in activeClients.Keys)
+                clientsAux.Add(activeClient);
+
+            NetworkCommon.ConnectedClients = clientsAux;
+
+            SetConnectedClientsCount();
+
+            foreach (var client in ActiveClients.Keys)
+                ActiveClients[client] = false;
+        }
+
+        private void SetConnectedClientsCount()
+        {
+            var connectedClientsCount = NetworkCommon.ConnectedClients.Count();
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                MessagingCenter.Send<object, string>(this, "SetPlayersCount", connectedClientsCount.ToString());
+            });
+        }
+
         private void DisconnectClientIfDuplicated(string clientIp)
         {
             var clients = NetworkCommon.ConnectedClients.Where(c => ((IPEndPoint)c.Client.RemoteEndPoint).Address.ToString() == clientIp);
 
             foreach (var client in clients) 
                 client.Close();
+
+            NetworkCommon.ConnectedClients = NetworkCommon.ConnectedClients.Where(c => c.Connected).ToList();
+            ActiveClients = NetworkCommon.ConnectedClients.Select(c => new { Client = c, IsActive = true }).ToDictionary(item => item.Client, item => item.IsActive);
         }
 
         private async Task HandleClientAsync(TcpClient client)
         {
             try
             {
+                if (!ActiveClients.Any(c => c.Key == client))
+                    ActiveClients.Add(client, true);
+
                 var stream = client.GetStream();
                 var buffer = new byte[1024];
 
                 while (NetworkCommon.ServerIsRunning)
                 {
-                    int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
                     if (bytesRead == 0)
+                    {
+                        client.Close();
+                        RemoveFromConnectedClients(client);
                         break;
+                    }
 
-                    string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    var receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
                     if (receivedMessage == "DISCONNECT")
                     {
@@ -108,6 +179,16 @@ namespace AppEspiaoJogo.Services
                             RemoveFromConnectedClients(client);
                             break;
                         }
+
+                        continue;
+                    }
+
+                    if (receivedMessage.Contains("ping"))
+                    {
+                        if(!ActiveClients.Any(c => c.Key == client))
+                            ActiveClients.Add(client, true);
+                        else
+                            ActiveClients[client] = true;
                     }
                 }
             }
@@ -152,8 +233,8 @@ namespace AppEspiaoJogo.Services
                 Word = Locations.GetRandomLocation()
             };
 
-            Random random = new Random();
-            int spy = random.Next(NetworkCommon.ConnectedClients.Count() + 1);
+            var random = new Random();
+            var spy = random.Next(NetworkCommon.ConnectedClients.Count() + 1);
 
             if (IsHostSpy(spy))
             {
@@ -202,8 +283,8 @@ namespace AppEspiaoJogo.Services
 
         private async Task BroadcastMessageAsync(List<TcpClient> clients, string message)
         {
-            byte[] data = Encoding.UTF8.GetBytes(message);
-            List<TcpClient> failedToSend = new List<TcpClient>();
+            var data = Encoding.UTF8.GetBytes(message);
+            var failedToSend = new List<TcpClient>();
 
             foreach (var client in clients)
             {
@@ -235,11 +316,12 @@ namespace AppEspiaoJogo.Services
 
             RemoveFromConnectedClients(failedToSend);
         }
-
+               
         private void RemoveFromConnectedClients(List<TcpClient> clients)
         {
             NetworkCommon.ConnectedClients.RemoveAll(clients.Contains);
             NetworkCommon.ConnectedClients.RemoveAll(client => !client.Connected);
+            ActiveClients = NetworkCommon.ConnectedClients.Select(c => new { Client = c, IsActive = true }).ToDictionary(item => item.Client, item => item.IsActive);
             var connectedClientsCount = NetworkCommon.ConnectedClients.Count(c => c.Connected);
 
             MainThread.BeginInvokeOnMainThread(() =>
@@ -252,6 +334,7 @@ namespace AppEspiaoJogo.Services
         {
             NetworkCommon.ConnectedClients.Remove(client);
             NetworkCommon.ConnectedClients.RemoveAll(client => !client.Connected);
+            ActiveClients = NetworkCommon.ConnectedClients.Select(c => new { Client = c, IsActive = true }).ToDictionary(item => item.Client, item => item.IsActive);
             var connectedClientsCount = NetworkCommon.ConnectedClients.Count(c => c.Connected);
 
             MainThread.BeginInvokeOnMainThread(() =>

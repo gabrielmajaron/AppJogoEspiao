@@ -197,10 +197,14 @@ public partial class HostPage : ContentPage
         _allowClicks = true;
         this.IsEnabled = true;
     }
-
+    
     protected override void OnAppearing()
     {
-        SetHostInitialState();
+        if (NetworkCommon.ServerIsRunning)
+            SetHostRunningState();        
+        else
+            SetHostInitialState();
+        
         base.OnAppearing();
     }
 }

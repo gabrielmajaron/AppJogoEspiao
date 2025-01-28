@@ -10,7 +10,7 @@ namespace AppEspiaoJogo.Common
 
         public static bool ServerIsRunning = false;
         public static TcpListener Server;
-        public static List<TcpClient> ConnectedClients;
+        public static List<TcpClient> ConnectedClients = new List<TcpClient>();
 
         public static TcpClient Client;
 
@@ -37,9 +37,6 @@ namespace AppEspiaoJogo.Common
 
         public static int ConnectedClientsCount()
         {
-            if (ConnectedClients == null)
-                return 0;
-
             return ConnectedClients.Count();
         }
 

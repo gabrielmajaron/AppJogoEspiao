@@ -12,7 +12,7 @@ namespace AppEspiaoJogo.Services
 
     public class ClientSocketService
     {
-        public async Task ConnectDevice(string serverIp)
+        public async Task ConnectDevice(string serverIp, bool isReconnection)
         {
             try
             {
@@ -22,8 +22,14 @@ namespace AppEspiaoJogo.Services
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Running);
+                    MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", isReconnection ? ClientStateEnum.Reconnected : ClientStateEnum.Running);
                 });
+
+                _ = RunSendPingAsync(async () =>
+                {
+                    await SendPingAsync();
+                    await Task.CompletedTask;
+                }, TimeSpan.FromSeconds(3));
 
                 _ = ListenToServerAsync();
             }
@@ -45,19 +51,19 @@ namespace AppEspiaoJogo.Services
 
                 while (NetworkCommon.IsClientConnected())
                 {
-                    int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
                     if (bytesRead == 0)
                     {
                         await MainThread.InvokeOnMainThreadAsync(() =>
                         {
-                            MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Aviso", "Desconectado"));
-                            MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Initial);
+                            //MessagingCenter.Send<object, (string, string)>(this, "DisplayAlert", ("Aviso", "Desconectado"));
+                            MessagingCenter.Send<object, ClientStateEnum>(this, "SetClientState", ClientStateEnum.Disconnected);
                         });
                         break;
                     }
 
-                    string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    var receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
                     var gameContent = GetGameContentFromMessage(ref receivedMessage);
 
@@ -97,9 +103,39 @@ namespace AppEspiaoJogo.Services
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                MessagingCenter.Send<object, string>(this, "Disconnected", errorMessage);                
+                MessagingCenter.Send<object, string>(this, "Disconnected", errorMessage);
             });
         }
+
+        private async Task RunSendPingAsync(Func<Task> action, TimeSpan interval)
+        {
+            while (true)
+            {
+                try
+                {
+                    await action();
+                    await Task.Delay(interval);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
+        private async Task SendPingAsync()
+        {
+            if (NetworkCommon.Client == null || (NetworkCommon.Client != null && !NetworkCommon.Client.Connected))
+                return;
+
+            var stream = NetworkCommon.Client!.GetStream();
+
+            var data = Encoding.UTF8.GetBytes("ping");
+            await stream.WriteAsync(data, 0, data.Length);
+        }        
 
         private GameContent? GetGameContentFromMessage(ref string receivedMessage)
         {

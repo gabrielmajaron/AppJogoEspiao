@@ -9,6 +9,8 @@ namespace AppEspiaoJogo.Enums
     public enum ClientStateEnum
     {
         Initial,
-        Running
+        Running,
+        Disconnected, 
+        Reconnected
     }
 }

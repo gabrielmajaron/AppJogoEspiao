@@ -2,6 +2,7 @@ using AppEspiaoJogo.Common;
 using AppEspiaoJogo.Enums;
 using AppEspiaoJogo.Game;
 using AppEspiaoJogo.Services;
+using System.Net;
 
 #pragma warning disable CS0618
 
@@ -47,6 +48,15 @@ namespace AppEspiaoJogo
                     case ClientStateEnum.Running:
                         SetClientRunningState();
                         break;
+                    case ClientStateEnum.Disconnected:
+#if ANDROID
+                ForegroundServicesManager.StopClient();
+#endif
+                        SetClientDisconnectedState();
+                        break;
+                    case ClientStateEnum.Reconnected:
+                        SetClientReconnectedState();
+                        break;
                 }
             });
 
@@ -66,25 +76,39 @@ namespace AppEspiaoJogo
                 SetClientInitialState();
             });
 
+#if ANDROID
             MessagingCenter.Subscribe<object, string>(this, "Disconnected", async (sender, errorMsg) =>
             {
-#if ANDROID
                 try
                 {
                     ForegroundServicesManager.StopClient();
                 }
                 catch (Exception _)
-                { }                
+                { }           
+        });
+
+            MessagingCenter.Subscribe<object>(this, "ResumeApp", sender =>
+            {
+                 Reconnect();
+            });     
 #endif
+        }
+
+        private void Reconnect()
+        {
+            if (NetworkCommon.IsClientConnected())
+                return;
+
+            if (DeviceIpEntry.Text != "127.0.0.1" && IPAddress.TryParse(DeviceIpEntry.Text, out _))
+            {
                 try
                 {
-                    ConnectDevice_Clicked(sender, null); // try to reconnect once
+                    ConnectAsync(true);
                 }
                 catch (Exception _)
                 {
-                    await DisplayAlert("Erro", errorMsg, "OK");
                 }
-            });
+            }
         }
 
         private void SetClientRunningState()
@@ -97,6 +121,14 @@ namespace AppEspiaoJogo
             PasteButton.IsVisible = false;
         }
 
+        private void SetClientReconnectedState()
+        {
+            DeviceIpEntry.IsVisible = false;
+            ConnectButton.Text = "Desconectar";
+            ConnectLabel.IsVisible = false;
+            PasteButton.IsVisible = false;
+        }
+        
         private void SetClientInitialState()
         {
             DeviceIpEntry.IsVisible = true;
@@ -108,7 +140,20 @@ namespace AppEspiaoJogo
             GameWord.TextColor = Colors.White;
         }
 
+        private void SetClientDisconnectedState()
+        {
+            DeviceIpEntry.IsVisible = true;
+            ConnectButton.Text = "Conectar";
+            ConnectLabel.IsVisible = true;
+            PasteButton.IsVisible = true;
+        }
+
         private async void ConnectDevice_Clicked(object sender, EventArgs e)
+        {
+            await ConnectAsync();
+        }
+
+        private async Task ConnectAsync(bool isReconnection = false)
         {
             if (!_allowClicks)
                 return;
@@ -134,18 +179,19 @@ namespace AppEspiaoJogo
 
             if (string.IsNullOrWhiteSpace(DeviceIpEntry.Text))
             {
-                await MainThread.InvokeOnMainThreadAsync(async () => {
-                    await DisplayAlert("Erro", "Insira um endereço IP válido.", "OK");                    
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DisplayAlert("Erro", "Insira um endereço IP válido.", "OK");
                 });
             }
             else
             {
 #if WINDOWS
-            await _clientSocketService.ConnectDevice(DeviceIpEntry.Text);
+            await _clientSocketService.ConnectDevice(DeviceIpEntry.Text, isReconnection);
 #endif
 
 #if ANDROID
-            ForegroundServicesManager.StartClient(DeviceIpEntry.Text);
+            ForegroundServicesManager.StartClient(DeviceIpEntry.Text, isReconnection);
 #endif
             }
 
@@ -175,9 +221,10 @@ namespace AppEspiaoJogo
             if (NetworkCommon.ServerIsRunning)            
                 DisplayAlert("Aviso", "Encerrando servidor.", "OK");
 
-            ForegroundServicesManager.StopServer();
+            ForegroundServicesManager.StopServer();            
+
             base.OnNavigatedTo(args);
-        }        
+        }
 #endif
 
         private async void OnPageDoubleTapped(object sender, TappedEventArgs e)

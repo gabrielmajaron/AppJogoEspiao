@@ -10,9 +10,10 @@ namespace AppEspiaoJogo.Common
         private static Intent? ClientService = new Intent(_context, typeof(ClientSocketForegroundService));
         private static Intent? ServerService = new Intent(_context, typeof(ServerSocketForegroundService));
 
-        public static void StartClient(string serverIp)
+        public static void StartClient(string serverIp, bool isReconnection)
         {
             ClientService!.PutExtra("ServerIp", serverIp);
+            ClientService!.PutExtra("IsReconnection", isReconnection);
 
             _context!.StartForegroundService(ClientService!);
         }
