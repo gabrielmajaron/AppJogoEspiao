@@ -28,6 +28,3 @@ O projeto foi criado com o intuito de explorar a tecnologia MAUI .NET, focando e
 
 ## Contribuições
 Este projeto foi desenvolvido para fins de estudo, mas contribuições são bem-vindas!
-
-## Licença
-Este projeto está licenciado sob a licença MIT.
